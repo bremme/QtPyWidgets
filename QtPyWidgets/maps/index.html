@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+     #map {
+      height: 90%;
+     }
+  </style>
+
+  <title></title>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script>
+    // var map;
+    var API_VERSION = "3.exp";
+    var googleMapsView = new GoogleMapsView()
+
+    function GoogleMapsView() {
+      var self = this;
+      // private properties
+      var _initLat = 0.0;
+      var _initLong = 0.0;
+      var _initZoom = 4;
+      var _initMapType = "terrain";
+      var _scriptId = "map-script";
+      // public properties
+      self.map = null
+      self.mapOptions = null
+      self.markers = {};
+      self.ready = false;
+
+      this.init = function(options, apiKey) {
+        console.log("GoogleMapsView.init");
+        console.log(options)
+        self.mapOptions = options;
+        self.setApiKey(apiKey);
+      };
+      // Google callback
+      this.initMap = function() {
+          console.log("GoogleMapsView.initMap");
+          var map = new google.maps.Map(document.getElementById('map'),
+            self.mapOptions
+          );
+          // connect event listeners
+          map.addListener("bounds_changed", _boundsChanged);
+          map.addListener("center_changed", _centerChanged);
+          map.addListener("click", _click);
+          map.addListener("dblclick", _doubleClick);
+          map.addListener("drag", _drag);
+          map.addListener("dragend", _dragend);
+          map.addListener("dragstart", _dragstart);
+          map.addListener("heading_changed", _headingChanged);
+          map.addListener("idle", _idle);
+          map.addListener("maptypeid_changed", _mapTypeIdChanged);
+          map.addListener("mousemove", _mousemove);
+          map.addListener("mouseout", _mouseout);
+          map.addListener("mouseover", _mouseover);
+          map.addListener("projection_changed", _projectionChanged);
+          map.addListener("resize", _resize);
+          map.addListener("rightclick", _rightclick);
+          map.addListener("tilesloaded", _tilesloaded);
+          map.addListener("tilt_changed", _tiltChanged);
+          map.addListener("zoom_changed", _zoomChanged);
+
+          self.ready = true;
+          self.map = map;
+          qtwebview.webViewReady();
+      };
+
+
+      // Private event handlers
+      var _boundsChanged = function() {
+          console.log("_boundsChanged");
+          var bounds = self.map.getBounds().toJSON();
+          console.log(bounds);
+          qtwebview._boundsChanged(
+              bounds.south, bounds.west, bounds.north, bounds.east
+          );
+      };
+      var _centerChanged = function() {
+          console.log("_centerChanged");
+          var center = self.map.getCenter().toJSON();
+          console.log(center);
+          qtwebview._centerChanged(center.lat, center.lng);
+      };
+      var _click = function(mouseEvent) {
+          console.log("_click");
+          console.log(mouseEvent);
+          qtwebview._click(JSON.stringify(mouseEvent, replacerFunction));
+      };
+      var _doubleClick = function(mouseEvent) {
+          console.log("_doubleClicked");
+          console.log(mouseEvent);
+          qtwebview._doubleClick(JSON.stringify(mouseEvent, replacerFunction));
+      };
+      var _drag = function() {
+          // This event is REPEATEDLY fired while the user drags the map.
+          console.log("_drag");
+          qtwebview._drag();
+      };
+      var _dragend = function() {
+          // This event is fired when the user stops dragging the map.
+          console.log("_dragend");
+          qtwebview._dragend();
+      };
+      var _dragstart = function() {
+          // This event is fired when the user starts dragging the map.
+          console.log("_dragstart");
+          qtwebview._dragstart();
+      };
+      var _headingChanged = function() {
+          console.log("_headingChanged");
+          console.log(self.map.getHeading());
+          qtwebview._headingChanged(self.map.getHeading());
+      };
+      var _idle = function() {
+          // This event is fired when the map becomes idle after panning or zooming.
+          console.log("_idle");
+          qtwebview._idle();
+      };
+      var _mapTypeIdChanged = function() {
+          // This event is fired when the mapTypeId property changes.
+          console.log("_maptypeidChanged");
+          qtwebview._mapTypeIdChanged(self.map.getMapTypeId());
+      };
+      var _mousemove = function(mouseEvent) {
+          // This event is fired whenever the user's mouse moves over the map container.
+          // console.log("_mousemove");
+          // console.log(mouseEvent);
+          qtwebview._mousemove(JSON.stringify(mouseEvent, replacerFunction));
+      };
+      var _mouseout = function(mouseEvent) {
+          console.log("_mouseout");
+          console.log(mouseEvent);
+          qtwebview._mouseout(JSON.stringify(mouseEvent, replacerFunction));
+      };
+      var _mouseover = function(mouseEvent) {
+          console.log("_mouseover");
+          console.log(mouseEvent);
+          qtwebview._mouseover(JSON.stringify(mouseEvent, replacerFunction));
+      };
+      var _projectionChanged = function() {
+          // This event is fired when the projection has changed.
+          console.log("_projectionChanged");
+          qtwebview._projectionChanged();
+      };
+      var _resize = function() {
+          console.log("_resize");
+          qtwebview._resize();
+      };
+      var _rightclick = function(mouseEvent) {
+          console.log("_rightclick");
+          console.log(mouseEvent);
+          qtwebview._rightclick(JSON.stringify(mouseEvent, replacerFunction));
+      };
+      var _tilesloaded = function() {
+          console.log("_tilesloaded");
+          qtwebview._tilesloaded();
+      };
+      var _tiltChanged = function() {
+          console.log("_tiltChanged");
+          console.log(self.map.getTilt());
+          qtwebview._tiltChanged(self.map.getTilt());
+      };
+      var _zoomChanged = function() {
+          console.log("_zoomChanged");
+          console.log(self.map.getZoom());
+          qtwebview._zoomChanged(self.map.getZoom());
+      };
+
+      // Slots
+      this.setApiKey = function(key) {
+          console.log("GoogleMapsView.setApiKey(" + key + ")");
+          var script = document.getElementById(_scriptId)
+          // check if api is already set
+          if (script != null) {
+            script.parentNode.removeChild(script)
+          };
+          script = document.createElement("script");
+          script.async = true;
+          script.defer = true;
+          script.id = _scriptId
+          script.src = "https://maps.googleapis.com/maps/api/js?v=" +
+            API_VERSION + "&key=" + key + "&callback=googleMapsView.initMap";
+          document.body.appendChild(script);
+      };
+
+      this.addMarker = function(id, markerOptions) {
+          if (self.ready == false) {
+            console.log("GoogleMapsView addMarker not ready");
+            return;
+          }
+          console.log("GoogleMapsView addMarker: " + id);
+          console.log(markerOptions);
+          markerOptions["map"] = self.map;
+
+          // var newMarker = new google.maps.Marker({
+          //     position: {lat: latitude, lng: longitude},
+          //     title: title,
+          //     map: self.map
+          // });
+          var newMarker = new google.maps.Marker(
+              markerOptions
+          );
+
+          newMarker.addListener("click", function() {
+            console.log(this);
+            console.log("marker with id: " + id + " clicked");
+            window["qtmarker" + id]._click()
+          });
+          self.markers[id] = newMarker;
+      };
+
+    };
+
+
+    var replacerFunction = function(key, val) {
+      seen = [];
+       if (val != null && typeof val == "object") {
+            if (seen.indexOf(val) >= 0) {
+                return;
+            }
+            seen.push(val);
+        }
+        return val;
+    }
+
+  </script>
+</body>
+
+</html>
